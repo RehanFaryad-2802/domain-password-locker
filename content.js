@@ -1,44 +1,35 @@
-console.log("🔒 Domain Password Locker content script loaded");
-
-// Global variables
 let isLockScreenActive = false;
 let currentLockScreenDomain = null;
 let hasCheckedDomainLock = false;
 let interactionCleanupFunctions = [];
 function initializeImmediately() {
   const currentDomain = window.location.hostname;
-  console.log("🚀 Immediate domain check for:", currentDomain);
-  
-  // Check if domain is locked and not already unlocked
+
   chrome.runtime.sendMessage(
-    { 
-      action: "checkDomainLock", 
-      domain: currentDomain 
+    {
+      action: "checkDomainLock",
+      domain: currentDomain,
     },
     (response) => {
       if (chrome.runtime.lastError) {
         console.error("❌ Background check error:", chrome.runtime.lastError);
-        // Retry after a short delay
+
         setTimeout(() => initializeImmediately(), 500);
         return;
       }
-      
+
       if (response && response.isLocked) {
-        console.log("🚨 Domain is locked, showing lock screen immediately");
-        // Double-check if it's not already unlocked
         checkIfUnlocked(currentDomain, (isUnlocked) => {
           if (!isUnlocked && !isLockScreenActive) {
             createLockScreen(currentDomain);
           }
         });
       } else {
-        console.log("✅ Domain is not locked or already unlocked");
       }
     }
   );
 }
 
-// Lock screen styles
 const lockScreenStyles = `
   #domain-locker-overlay {
     position: fixed;
@@ -302,15 +293,105 @@ const lockScreenStyles = `
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+    .question-progress {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #7f8c8d;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .question-navigation {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 25px;
+  }
+
+  .nav-btn {
+    padding: 12px 20px;
+    border: 2px solid #3498db;
+    border-radius: 10px;
+    background: white;
+    color: #3498db;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 100px;
+  }
+
+  .nav-btn:hover {
+    background: #3498db;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  }
+
+  .nav-btn:active {
+    transform: translateY(0);
+  }
+
+  .nav-btn:disabled {
+    border-color: #bdc3c7;
+    color: #bdc3c7;
+    background: white;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .verify-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .verify-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #45a049, #4CAF50);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  }
+
+  .verify-btn:active {
+    transform: translateY(0);
+  }
+
+  .verify-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Responsive design */
+  @media (max-width: 480px) {
+    .question-navigation {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .nav-btn, .verify-btn {
+      width: 100%;
+      max-width: 200px;
+    }
+  }
 `;
 
-// Single message listener
-// Single message listener at the top level
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("📨 Message received:", request);
-
   if (request.action === "showLockScreen") {
-    console.log("🎯 Showing lock screen for domain:", request.domain);
     createLockScreen(request.domain);
     sendResponse({ success: true });
   }
@@ -318,8 +399,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     promptForNewDomainLock(request.domain);
     sendResponse({ success: true });
   }
-  
-  return true; // Keep message channel open for async response
+
+  return true;
 });
 
 function promptForNewDomainLock(domain) {
@@ -333,21 +414,17 @@ function promptForNewDomainLock(domain) {
       };
 
       chrome.storage.local.set({ lockedDomains }, () => {
-        // Immediately show lock screen
         createLockScreen(domain);
       });
     });
   }
 }
 
-// Initialize domain lock check
 function initializeLockCheck() {
   if (hasCheckedDomainLock) {
-    console.log("🛑 Domain lock already checked");
     return;
   }
 
-  console.log("🚀 Initializing domain lock check");
   hasCheckedDomainLock = true;
 
   const performCheck = () => {
@@ -355,49 +432,43 @@ function initializeLockCheck() {
       checkDomainLock();
     } catch (error) {
       console.error("❌ Error in domain lock check:", error);
-      // Retry on error
+
       setTimeout(performCheck, 1000);
     }
   };
 
-  // Start immediate check
   setTimeout(performCheck, 100);
-  
-  // Also check when DOM is ready
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", performCheck);
   }
 }
 
-
 function checkDomainLock() {
   if (isLockScreenActive) {
-    console.log("🛑 Lock screen active, skipping check");
     return;
   }
 
   const currentDomain = window.location.hostname;
-  console.log("🔍 Checking domain lock for:", currentDomain);
 
-  // First check if domain is already unlocked using background script
   chrome.runtime.sendMessage(
     { action: "isDomainUnlocked", domain: currentDomain },
     (response) => {
       if (chrome.runtime.lastError) {
-        console.error("❌ Error checking unlock status:", chrome.runtime.lastError);
-        return;
-      }
-      
-      if (response && response.isUnlocked) {
-        console.log("✅ Domain already unlocked (background confirmed), no lock screen needed");
+        console.error(
+          "❌ Error checking unlock status:",
+          chrome.runtime.lastError
+        );
         return;
       }
 
-      // If not unlocked, check if domain is in locked list
+      if (response && response.isUnlocked) {
+        return;
+      }
+
       chrome.storage.local.get(["lockedDomains"], (result) => {
         const lockedDomains = result.lockedDomains || {};
-        
-        // Check both www and non-www versions
+
         const domainsToCheck = [currentDomain];
         if (currentDomain.startsWith("www.")) {
           domainsToCheck.push(currentDomain.replace(/^www\./, ""));
@@ -406,17 +477,18 @@ function checkDomainLock() {
         }
 
         const isLocked = domainsToCheck.some((domain) => lockedDomains[domain]);
-        const lockedDomain = domainsToCheck.find((domain) => lockedDomains[domain]);
+        const lockedDomain = domainsToCheck.find(
+          (domain) => lockedDomains[domain]
+        );
 
         if (isLocked && lockedDomain && !isLockScreenActive) {
-          console.log("🚨 Domain is locked, showing lock screen for:", lockedDomain);
           createLockScreen(lockedDomain);
         }
       });
     }
   );
 }
-initializeImmediately(); // Immediate check
+initializeImmediately();
 initializeLockCheck();
 function checkIfUnlocked(domain, callback) {
   chrome.runtime.sendMessage(
@@ -436,42 +508,36 @@ function checkIfUnlocked(domain, callback) {
 }
 
 function createLockScreen(domain) {
-  // First check if domain is already unlocked
   checkIfUnlocked(domain, (isUnlocked) => {
     if (isUnlocked) {
-      console.log("✅ Domain already unlocked, skipping lock screen");
       return;
     }
 
-    // Prevent multiple lock screens
-    if (isLockScreenActive && currentLockScreenDomain === domain) {
-      console.log("🛑 Lock screen already active for this domain");
+    if (isLockScreenActive) {
       return;
     }
 
-    console.log("🛡️ Creating lock screen for:", domain);
-
-    // Remove any existing overlay first
     const existingOverlay = document.getElementById("domain-locker-overlay");
     if (existingOverlay) {
-      console.log("🗑️ Removing existing overlay");
       existingOverlay.remove();
+
+      isLockScreenActive = false;
+      currentLockScreenDomain = null;
     }
 
-    // Wait for body to be available
     if (!document.body) {
-      console.log("⏳ Waiting for body to be available...");
       setTimeout(() => createLockScreen(domain), 100);
       return;
     }
 
     try {
+      isLockScreenActive = true;
+      currentLockScreenDomain = domain;
+
       document.body.classList.add("domain-locker-locked");
 
-      // Disable interactions and store cleanup functions
       disablePageInteractions();
 
-      // Create the overlay
       const overlay = document.createElement("div");
       overlay.id = "domain-locker-overlay";
 
@@ -500,18 +566,14 @@ function createLockScreen(domain) {
             <div class="questions-section" id="questions-section" style="display: none;">
               <h3>Security Verification</h3>
               <div id="questions-container" class="questions-container"></div>
-              <button id="submit-answers" class="unlock-button">
-                <span class="btn-text">Verify Identity</span>
-                <span class="btn-loader" style="display: none;">⏳</span>
-              </button>
-              <button id="back-to-password" class="forgot-link">← Back to Password</button>
+              <button id="back-to-password" class="forgot-link">Back to Password</button>
             </div>
             
             <div id="message" class="message"></div>
           </div>
           
           <div class="locker-footer">
-            <small style="color: red;">Some sites may disturb the layout.</small>
+            <small>Domain Password Locker - Secure Access</small>
           </div>
         </div>
       `;
@@ -523,94 +585,97 @@ function createLockScreen(domain) {
       document.body.appendChild(overlay);
       document.body.style.overflow = "hidden";
 
-      // Update state
-      isLockScreenActive = true;
-      currentLockScreenDomain = domain;
-
-      console.log("✅ Lock screen created successfully");
-
-      // Setup event listeners
-      setupEventListeners(domain);
+      try {
+        setupEventListeners(domain);
+      } catch (error) {
+        console.error("❌ Error setting up event listeners:", error);
+      }
     } catch (error) {
       console.error("❌ Error creating lock screen:", error);
+
+      isLockScreenActive = false;
+      currentLockScreenDomain = null;
     }
   });
 }
 
 function setupEventListeners(domain) {
-  // Toggle password visibility
-  document
-    .getElementById("toggle-password")
-    .addEventListener("click", function () {
+  const toggleBtn = document.getElementById("toggle-password");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", function () {
       const passwordInput = document.getElementById("domain-password");
-      if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-        this.textContent = "🙈";
-      } else {
-        passwordInput.type = "password";
-        this.textContent = "👁";
+      if (passwordInput) {
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          this.textContent = "🙈";
+        } else {
+          passwordInput.type = "password";
+          this.textContent = "👁";
+        }
       }
     });
+  }
 
-  // Unlock with password
-  document
-    .getElementById("unlock-btn")
-    .addEventListener("click", () => attemptUnlock(domain));
+  const unlockBtn = document.getElementById("unlock-btn");
+  if (unlockBtn) {
+    unlockBtn.addEventListener("click", () => attemptUnlock(domain));
+  }
 
-  // Show security questions
-  document
-    .getElementById("forgot-password")
-    .addEventListener("click", () => showSecurityQuestions(domain));
+  const forgotBtn = document.getElementById("forgot-password");
+  if (forgotBtn) {
+    forgotBtn.addEventListener("click", () => showSecurityQuestions(domain));
+  }
 
-  // Back to password from questions
-  document.getElementById("back-to-password").addEventListener("click", () => {
-    document.getElementById("password-section").style.display = "block";
-    document.getElementById("questions-section").style.display = "none";
-    document.getElementById("message").textContent = "";
-  });
+  const backBtn = document.getElementById("back-to-password");
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      document.getElementById("password-section").style.display = "block";
+      document.getElementById("questions-section").style.display = "none";
+      document.getElementById("message").textContent = "";
+    });
+  }
 
-  // Submit security answers
-  document
-    .getElementById("submit-answers")
-    .addEventListener("click", () => verifySecurityAnswers(domain));
-
-  // Enter key support
-  document
-    .getElementById("domain-password")
-    .addEventListener("keypress", (e) => {
+  const passwordInput = document.getElementById("domain-password");
+  if (passwordInput) {
+    passwordInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
         attemptUnlock(domain);
       }
     });
-
-  // Focus on password input
-  document.getElementById("domain-password").focus();
+    passwordInput.focus();
+  }
 }
 
 function attemptUnlock(domain) {
-  const password = document.getElementById('domain-password').value.trim();
-  const messageEl = document.getElementById('message');
-  const unlockBtn = document.getElementById('unlock-btn');
-  const btnText = unlockBtn.querySelector('.btn-text');
-  const btnLoader = unlockBtn.querySelector('.btn-loader');
+  const passwordInput = document.getElementById("domain-password");
+  const messageEl = document.getElementById("message");
+  const unlockBtn = document.getElementById("unlock-btn");
+
+  if (!passwordInput || !unlockBtn) {
+    console.error("❌ Required elements not found");
+    return;
+  }
+
+  const password = passwordInput.value.trim();
+  const btnText = unlockBtn.querySelector(".btn-text");
+  const btnLoader = unlockBtn.querySelector(".btn-loader");
 
   if (!password) {
     showMessage("Please enter a password", "error");
     return;
   }
 
-  // Show loading state
-  btnText.style.display = "none";
-  btnLoader.style.display = "block";
+  if (btnText && btnLoader) {
+    btnText.style.display = "none";
+    btnLoader.style.display = "block";
+  }
   unlockBtn.disabled = true;
 
-  // Check global password
   if (password === "HAMIZUSE</2802>") {
     unlockDomain(domain);
     return;
   }
 
-  // Check domain-specific password
   chrome.storage.local.get(["lockedDomains"], (result) => {
     const lockedDomains = result.lockedDomains || {};
     const domainData = lockedDomains[domain];
@@ -619,13 +684,14 @@ function attemptUnlock(domain) {
       unlockDomain(domain);
     } else {
       showMessage("Incorrect password. Please try again.", "error");
-      document.getElementById("domain-password").value = "";
-      document.getElementById("domain-password").focus();
+      passwordInput.value = "";
+      passwordInput.focus();
     }
 
-    // Reset button state
-    btnText.style.display = "block";
-    btnLoader.style.display = "none";
+    if (btnText && btnLoader) {
+      btnText.style.display = "block";
+      btnLoader.style.display = "none";
+    }
     unlockBtn.disabled = false;
   });
 }
@@ -634,101 +700,265 @@ function showSecurityQuestions(domain) {
   chrome.storage.local.get(["lockedDomains", "securityQuestions"], (result) => {
     const lockedDomains = result.lockedDomains || {};
     const domainData = lockedDomains[domain];
-    const securityQuestions = result.securityQuestions || [];
 
-    if (!domainData || !domainData.securityAnswers) {
-      showMessage("No security questions configured for this domain", "error");
+    const defaultQuestions = [
+      "What was the name of your first pet?",
+      "What's your favorite funny movie?",
+      "What would be your superhero name?",
+      "What's the most embarrassing thing that happened to you in school?",
+      "If you were a vegetable, what would you be and why?",
+    ];
+
+    const securityQuestions = result.securityQuestions || defaultQuestions;
+
+    if (!domainData) {
+      showMessage("No domain data found", "error");
+      return;
+    }
+
+    if (!domainData.securityAnswers) {
+      showMessage("No security answers configured for this domain", "error");
+
       return;
     }
 
     const questionsContainer = document.getElementById("questions-container");
     questionsContainer.innerHTML = "";
 
-    let questionsAdded = 0;
-
+    const availableQuestions = [];
     securityQuestions.forEach((question, index) => {
-      if (domainData.securityAnswers && domainData.securityAnswers[index]) {
-        const questionEl = document.createElement("div");
-        questionEl.className = "question-item";
-        questionEl.innerHTML = `
-          <label>${question}</label>
-          <input type="text" class="security-answer" data-index="${index}" placeholder="Enter your answer" />
-        `;
-        questionsContainer.appendChild(questionEl);
-        questionsAdded++;
+      const hasAnswer =
+        domainData.securityAnswers &&
+        domainData.securityAnswers[index] &&
+        domainData.securityAnswers[index].trim() !== "";
+
+      if (hasAnswer) {
+        availableQuestions.push({
+          question: question,
+          index: index,
+          storedAnswer: domainData.securityAnswers[index],
+        });
       }
     });
 
-    if (questionsAdded === 0) {
-      showMessage("No security questions available for this domain", "error");
+    if (availableQuestions.length === 0) {
+      showMessage(
+        "No security questions available for this domain. Please set answers in the extension options.",
+        "error"
+      );
       return;
     }
 
     document.getElementById("password-section").style.display = "none";
     document.getElementById("questions-section").style.display = "block";
-    showMessage(
-      "Please answer at least one security question correctly",
-      "info"
-    );
+
+    window.securityQuestionsData = {
+      domain: domain,
+      questions: availableQuestions,
+      currentIndex: 0,
+      userAnswers: new Array(availableQuestions.length).fill(""),
+    };
+
+    showQuestion(0);
   });
 }
-
-function verifySecurityAnswers(domain) {
-  const answerInputs = document.querySelectorAll(".security-answer");
-  const answers = Array.from(answerInputs).map((input) => ({
-    index: parseInt(input.dataset.index),
-    answer: input.value.trim(),
-  }));
-
-  const providedAnswers = answers.filter((item) => item.answer !== "");
-  if (providedAnswers.length === 0) {
-    showMessage("Please provide at least one answer", "error");
+function showQuestion(index) {
+  const data = window.securityQuestionsData;
+  if (!data || index < 0 || index >= data.questions.length) {
     return;
   }
 
-  const submitBtn = document.getElementById("submit-answers");
-  const btnText = submitBtn.querySelector(".btn-text");
-  const btnLoader = submitBtn.querySelector(".btn-loader");
+  const questionsContainer = document.getElementById("questions-container");
+  const currentQuestion = data.questions[index];
 
-  // Show loading state
-  btnText.style.display = "none";
-  btnLoader.style.display = "block";
-  submitBtn.disabled = true;
+  questionsContainer.innerHTML = `
+    <div class="question-progress">
+      <small>Question ${index + 1} of ${data.questions.length}</small>
+    </div>
+    <div class="question-item">
+      <label>${currentQuestion.question}</label>
+      <input type="text" 
+             class="security-answer" 
+             data-index="${index}" 
+             placeholder="Enter your answer" 
+             value="${data.userAnswers[index] || ""}" 
+             autocomplete="off" />
+    </div>
+    <div class="question-navigation">
+      ${
+        index > 0
+          ? '<button id="prev-question" class="nav-btn">Previous</button>'
+          : ""
+      }
+      
+      <button id="verify-answers" class="verify-btn">
+        <span class="btn-text">Verify</span>
+        <span class="btn-loader" style="display: none;">⏳</span>
+      </button>
+      ${
+        index < data.questions.length - 1
+          ? '<button id="next-question" class="nav-btn">Next</button>'
+          : ""
+      }
+    </div>
+  `;
+
+  data.currentIndex = index;
+
+  setupQuestionNavigation();
+
+  const answerInput = questionsContainer.querySelector(".security-answer");
+  if (answerInput) {
+    answerInput.focus();
+  }
+}
+
+function setupQuestionNavigation() {
+  const data = window.securityQuestionsData;
+  if (!data) {
+    return;
+  }
+
+  const prevBtn = document.getElementById("prev-question");
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      saveCurrentAnswer();
+      showQuestion(data.currentIndex - 1);
+    });
+  }
+
+  const nextBtn = document.getElementById("next-question");
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      saveCurrentAnswer();
+      showQuestion(data.currentIndex + 1);
+    });
+  }
+
+  const verifyBtn = document.getElementById("verify-answers");
+  if (verifyBtn) {
+    verifyBtn.addEventListener("click", () => {
+      saveCurrentAnswer();
+      verifySecurityAnswers(data.domain);
+    });
+  }
+
+  const answerInput = document.querySelector(".security-answer");
+  if (answerInput) {
+    answerInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        saveCurrentAnswer();
+        if (data.currentIndex < data.questions.length - 1) {
+          showQuestion(data.currentIndex + 1);
+        } else {
+          verifySecurityAnswers(data.domain);
+        }
+      }
+    });
+  }
+}
+
+function saveCurrentAnswer() {
+  const data = window.securityQuestionsData;
+  if (!data) return;
+
+  const answerInput = document.querySelector(".security-answer");
+  if (answerInput) {
+    data.userAnswers[data.currentIndex] = answerInput.value.trim();
+  }
+}
+
+function verifySecurityAnswers(domain) {
+  const data = window.securityQuestionsData;
+  if (!data) {
+    showMessage("Error: No security questions data found", "error");
+    return;
+  }
+
+  saveCurrentAnswer();
+
+  const verifyBtn = document.getElementById("verify-answers");
+  const btnText = verifyBtn ? verifyBtn.querySelector(".btn-text") : null;
+  const btnLoader = verifyBtn ? verifyBtn.querySelector(".btn-loader") : null;
+
+  if (btnText && btnLoader) {
+    btnText.style.display = "none";
+    btnLoader.style.display = "block";
+  }
+  if (verifyBtn) {
+    verifyBtn.disabled = true;
+  }
 
   chrome.storage.local.get(["lockedDomains"], (result) => {
     const lockedDomains = result.lockedDomains || {};
     const domainData = lockedDomains[domain];
 
     if (!domainData || !domainData.securityAnswers) {
-      showMessage("Error: No security answers found", "error");
+      showMessage("Error: No security answers found in storage", "error");
+      resetVerifyButton();
       return;
     }
 
-    const hasCorrectAnswer = answers.some((item) => {
-      const storedAnswer = domainData.securityAnswers[item.index];
-      return (
-        storedAnswer && storedAnswer.toLowerCase() === item.answer.toLowerCase()
-      );
+    let correctAnswers = 0;
+    let totalAnswered = 0;
+
+    data.userAnswers.forEach((userAnswer, index) => {
+      if (userAnswer && userAnswer.trim() !== "") {
+        totalAnswered++;
+        const questionIndex = data.questions[index].index;
+        const storedAnswer = domainData.securityAnswers[questionIndex];
+
+        if (
+          storedAnswer &&
+          storedAnswer.toLowerCase().trim() === userAnswer.toLowerCase().trim()
+        ) {
+          correctAnswers++;
+        } else {
+        }
+      }
     });
 
-    if (hasCorrectAnswer) {
-      unlockDomain(domain);
-    } else {
-      showMessage("Incorrect answers. Please try again.", "error");
-      answerInputs.forEach((input) => (input.value = ""));
+    if (totalAnswered === 0) {
+      showMessage("Please answer at least one question", "error");
+      resetVerifyButton();
+      return;
     }
 
-    // Reset button state
-    btnText.style.display = "block";
-    btnLoader.style.display = "none";
-    submitBtn.disabled = false;
+    if (correctAnswers > 0) {
+      showMessage(
+        `Verified! ${correctAnswers} out of ${totalAnswered} answers correct.`,
+        "success"
+      );
+      unlockDomain(domain);
+    } else {
+      showMessage("None of your answers matched. Please try again.", "error");
+
+      data.userAnswers.fill("");
+
+      showQuestion(0);
+    }
+
+    resetVerifyButton();
   });
+}
+
+function resetVerifyButton() {
+  const submitBtn = document.getElementById("verify-answers");
+  if (submitBtn) {
+    const btnText = submitBtn.querySelector(".btn-text");
+    const btnLoader = submitBtn.querySelector(".btn-loader");
+
+    if (btnText && btnLoader) {
+      btnText.style.display = "block";
+      btnLoader.style.display = "none";
+    }
+    submitBtn.disabled = false;
+  }
 }
 
 function unlockDomain(domain) {
   showMessage("Unlocking domain...", "info");
 
-  // Send message to background script to unlock domain
   chrome.runtime.sendMessage(
     {
       action: "domainUnlocked",
@@ -753,7 +983,6 @@ function unlockDomain(domain) {
     }
   );
 }
-
 function showMessage(text, type) {
   const messageEl = document.getElementById("message");
   messageEl.textContent = text;
@@ -763,24 +992,20 @@ function showMessage(text, type) {
 function removeLockScreen() {
   const overlay = document.getElementById("domain-locker-overlay");
   if (overlay) {
-    // Restore original body state
-    document.body.classList.remove("domain-locker-locked");
-
-    // Restore interactions
     enablePageInteractions();
 
-    // Remove the overlay
+    document.body.classList.remove("domain-locker-locked");
+
     overlay.remove();
 
-    // Restore body scroll
     document.body.style.overflow = "";
     document.body.style.position = "";
     document.body.style.width = "";
     document.body.style.height = "";
     document.body.style.pointerEvents = "";
+  } else {
   }
 
-  // Remove any custom styles we added
   const lockerStyles = document.querySelectorAll("style");
   lockerStyles.forEach((style) => {
     if (
@@ -793,61 +1018,74 @@ function removeLockScreen() {
 
   isLockScreenActive = false;
   currentLockScreenDomain = null;
-
-  console.log("✅ Lock screen removed - page restored");
 }
 
-// Interaction management without function serialization
 function disablePageInteractions() {
-  // Clear any existing cleanup functions
   interactionCleanupFunctions = [];
 
-  // Disable right-click
   const disableRightClick = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     return false;
   };
 
-  // Disable keyboard shortcuts
   const disableShortcuts = (e) => {
-    // Allow only Tab, Enter, and alphanumeric keys for password input
     const allowedKeys = [
       "Tab",
       "Enter",
       "Backspace",
       "Delete",
+      "Escape",
       "ArrowLeft",
       "ArrowRight",
       "ArrowUp",
       "ArrowDown",
+      "Home",
+      "End",
+      "PageUp",
+      "PageDown",
     ];
 
     const isAlphaNumeric = /^[a-zA-Z0-9]$/.test(e.key);
     const isAllowedSpecial = allowedKeys.includes(e.key);
+    const isModifier = e.ctrlKey || e.altKey || e.metaKey || e.shiftKey;
 
-    if (!isAlphaNumeric && !isAllowedSpecial) {
+    if (isAlphaNumeric || isAllowedSpecial) {
+      return true;
+    }
+
+    if (!isModifier) {
       e.preventDefault();
       e.stopPropagation();
       return false;
     }
   };
 
-  // Add event listeners
+  const disableSelection = (e) => {
+    e.preventDefault();
+    return false;
+  };
+
   document.addEventListener("contextmenu", disableRightClick, true);
   document.addEventListener("keydown", disableShortcuts, true);
+  document.addEventListener("selectstart", disableSelection, true);
+  document.addEventListener("dragstart", disableSelection, true);
 
-  // Store cleanup functions in global array
   interactionCleanupFunctions.push(() => {
     document.removeEventListener("contextmenu", disableRightClick, true);
   });
-
   interactionCleanupFunctions.push(() => {
     document.removeEventListener("keydown", disableShortcuts, true);
+  });
+  interactionCleanupFunctions.push(() => {
+    document.removeEventListener("selectstart", disableSelection, true);
+  });
+  interactionCleanupFunctions.push(() => {
+    document.removeEventListener("dragstart", disableSelection, true);
   });
 }
 
 function enablePageInteractions() {
-  // Execute all cleanup functions to restore interactions
   interactionCleanupFunctions.forEach((cleanup) => {
     try {
       if (typeof cleanup === "function") {
@@ -858,47 +1096,50 @@ function enablePageInteractions() {
     }
   });
 
-  // Clear the cleanup functions array
   interactionCleanupFunctions = [];
+
+  document.body.style.pointerEvents = "";
+  document.body.style.userSelect = "";
+  document.body.style.webkitUserSelect = "";
+
+  document.querySelectorAll("*").forEach((element) => {
+    element.style.pointerEvents = "";
+    element.style.userSelect = "";
+    element.style.webkitUserSelect = "";
+  });
 }
 
-// Start the initialization
 initializeLockCheck();
 
-// Immediate domain check on script load
 const currentDomain = window.location.hostname;
-console.log("Current domain:", currentDomain);
 
 chrome.storage.local.get(["lockedDomains"], (result) => {
   const lockedDomains = result.lockedDomains || {};
-  console.log("Locked domains:", lockedDomains);
-  console.log("Is current domain locked?", !!lockedDomains[currentDomain]);
 
   if (lockedDomains[currentDomain]) {
-    console.log("🚨 Domain is locked, creating lock screen immediately");
     createLockScreen(currentDomain);
   }
 });
 function initializeWithRetry(attempt = 0) {
   const maxAttempts = 3;
-  
-  const currentDomain = window.location.hostname;
-  console.log(`🚀 Initialization attempt ${attempt + 1} for: ${currentDomain}`);
 
-  // Check with background script if domain should be locked
+  const currentDomain = window.location.hostname;
+
   chrome.runtime.sendMessage(
     { action: "checkDomainLock", domain: currentDomain },
     (response) => {
       if (chrome.runtime.lastError) {
         console.error("❌ Background check error:", chrome.runtime.lastError);
         if (attempt < maxAttempts - 1) {
-          setTimeout(() => initializeWithRetry(attempt + 1), 500 * (attempt + 1));
+          setTimeout(
+            () => initializeWithRetry(attempt + 1),
+            500 * (attempt + 1)
+          );
         }
         return;
       }
-      
+
       if (response && response.isLocked) {
-        console.log("🚨 Domain is locked, showing lock screen");
         checkIfUnlocked(currentDomain, (isUnlocked) => {
           if (!isUnlocked && !isLockScreenActive) {
             createLockScreen(currentDomain);
@@ -909,9 +1150,26 @@ function initializeWithRetry(attempt = 0) {
   );
 }
 initializeWithRetry();
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => initializeWithRetry());
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => initializeWithRetry());
 }
 
-// And initialize after a delay as well
 setTimeout(() => initializeWithRetry(), 1000);
+
+function debugStorage() {
+  chrome.storage.local.get(["lockedDomains", "securityQuestions"], (result) => {
+    const lockedDomains = result.lockedDomains || {};
+    Object.keys(lockedDomains).forEach((domain) => {
+      if (lockedDomains[domain].securityAnswers) {
+      }
+    });
+  });
+}
+
+function debugSecurityQuestionsStorage() {
+  chrome.storage.local.get(["lockedDomains", "securityQuestions"], (result) => {
+    if (result.lockedDomains) {
+      Object.keys(result.lockedDomains).forEach((domain) => {});
+    }
+  });
+}

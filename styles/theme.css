@@ -5,7 +5,7 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
   padding: 20px;
@@ -22,7 +22,7 @@ body {
 }
 
 header {
-  background: linear-gradient(135deg, #4CAF50, #45a049);
+  background: linear-gradient(135deg, #4caf50, #45a049);
   color: white;
   padding: 30px;
   text-align: center;
@@ -61,7 +61,7 @@ header p {
 
 .tab-button.active {
   background: white;
-  border-bottom: 3px solid #4CAF50;
+  border-bottom: 3px solid #4caf50;
   font-weight: bold;
 }
 
@@ -80,7 +80,7 @@ header p {
 
 .section h2 {
   margin-bottom: 20px;
-  color: #4CAF50;
+  color: #4caf50;
   border-bottom: 2px solid #f0f0f0;
   padding-bottom: 10px;
 }
@@ -103,14 +103,14 @@ header p {
 }
 
 .input-group input:focus {
-  border-color: #4CAF50;
+  border-color: #4caf50;
   outline: none;
   box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
 }
 
 button {
   padding: 12px 20px;
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
   border: none;
   border-radius: 8px;
@@ -187,7 +187,9 @@ button:hover {
   gap: 10px;
 }
 
-.btn-show-password, .btn-edit, .btn-delete {
+.btn-show-password,
+.btn-edit,
+.btn-delete {
   padding: 8px 12px;
   font-size: 0.9rem;
 }
@@ -251,7 +253,7 @@ button:hover {
   width: 100%;
   padding: 15px;
   margin-top: 20px;
-  background: #2196F3;
+  background: #2196f3;
   font-size: 1.1rem;
 }
 
@@ -264,29 +266,29 @@ button:hover {
     margin: 10px;
     border-radius: 10px;
   }
-  
+
   header {
     padding: 20px;
   }
-  
+
   header h1 {
     font-size: 2rem;
   }
-  
+
   .tab-content {
     padding: 20px;
   }
-  
+
   .input-group {
     flex-direction: column;
   }
-  
+
   .domain-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .domain-actions {
     width: 100%;
     justify-content: space-between;
@@ -325,7 +327,7 @@ button:hover {
 .save-settings-button {
   width: 100%;
   padding: 15px;
-  background: #2196F3;
+  background: #2196f3;
   color: white;
   border: none;
   border-radius: 8px;
@@ -351,8 +353,8 @@ button:hover {
 }
 
 .setting-label input[type="checkbox"]:checked + .checkmark {
-  background: #4CAF50;
-  border-color: #4CAF50;
+  background: #4caf50;
+  border-color: #4caf50;
 }
 
 .checkmark:after {
@@ -387,17 +389,28 @@ button:hover {
   border-radius: 3px;
 }
 
-.strength-weak { background: #ff4757; width: 25%; }
-.strength-fair { background: #ffa502; width: 50%; }
-.strength-good { background: #2ed573; width: 75%; }
-.strength-strong { background: #1e90ff; width: 100%; }
+.strength-weak {
+  background: #ff4757;
+  width: 25%;
+}
+.strength-fair {
+  background: #ffa502;
+  width: 50%;
+}
+.strength-good {
+  background: #2ed573;
+  width: 75%;
+}
+.strength-strong {
+  background: #1e90ff;
+  width: 100%;
+}
 
 .strength-text {
   font-size: 0.8rem;
   margin-top: 5px;
   color: #666;
 }
-
 
 /* Context Menu Styles */
 .context-menu-item {
@@ -425,10 +438,22 @@ button:hover {
   border-radius: 3px;
 }
 
-.strength-weak { background: #ff4757; width: 25%; }
-.strength-fair { background: #ffa502; width: 50%; }
-.strength-good { background: #2ed573; width: 75%; }
-.strength-strong { background: #1e90ff; width: 100%; }
+.strength-weak {
+  background: #ff4757;
+  width: 25%;
+}
+.strength-fair {
+  background: #ffa502;
+  width: 50%;
+}
+.strength-good {
+  background: #2ed573;
+  width: 75%;
+}
+.strength-strong {
+  background: #1e90ff;
+  width: 100%;
+}
 
 .strength-text {
   font-size: 0.8rem;
@@ -450,14 +475,14 @@ button:hover {
 }
 
 .domains-table th {
-  background: linear-gradient(135deg, #4CAF50, #45a049);
+  background: linear-gradient(135deg, #4caf50, #45a049);
   color: white;
   padding: 15px;
   text-align: left;
   font-weight: 600;
   font-size: 1rem;
 }
-.domains-table th:last-child{
+.domains-table th:last-child {
   text-align: center;
 }
 .domains-table td {
@@ -481,7 +506,7 @@ button:hover {
 }
 
 .password-display-cell {
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   color: #666;
   font-size: 0.9rem;
 }
@@ -520,7 +545,9 @@ button:hover {
 }
 
 /* Action buttons */
-.btn-show-password, .btn-edit, .btn-delete {
+.btn-show-password,
+.btn-edit,
+.btn-delete {
   padding: 6px 10px;
   font-size: 0.8rem;
   border: none;
@@ -568,11 +595,11 @@ button:hover {
   .domains-table-container {
     overflow-x: auto;
   }
-  
+
   .domains-table {
     min-width: 600px;
   }
-  
+
   .domain-actions-cell {
     flex-wrap: wrap;
     justify-content: center;

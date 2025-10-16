@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener("DOMContentLoaded", init);
 
 function init() {
   loadDomains();
@@ -10,26 +10,36 @@ function init() {
 }
 
 function setupEventListeners() {
-  document.getElementById('add-domain-btn').addEventListener('click', addDomain);
-  document.getElementById('toggle-password-btn').addEventListener('click', togglePasswordVisibility);
-  document.getElementById('search-domains').addEventListener('input', filterDomains);
-  document.getElementById('save-answers-btn').addEventListener('click', saveSecurityAnswers);
-  document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+  document
+    .getElementById("add-domain-btn")
+    .addEventListener("click", addDomain);
+  document
+    .getElementById("toggle-password-btn")
+    .addEventListener("click", togglePasswordVisibility);
+  document
+    .getElementById("search-domains")
+    .addEventListener("input", filterDomains);
+  document
+    .getElementById("save-answers-btn")
+    .addEventListener("click", saveSecurityAnswers);
+  document
+    .getElementById("save-settings-btn")
+    .addEventListener("click", saveSettings);
 }
 
-function showNotification(message, type = 'success') {
-  // Remove existing notification
-  const existingNotification = document.getElementById('domain-locker-notification');
+function showNotification(message, type = "success") {
+  const existingNotification = document.getElementById(
+    "domain-locker-notification"
+  );
   if (existingNotification) {
     existingNotification.remove();
   }
-  
-  const notification = document.createElement('div');
-  notification.id = 'domain-locker-notification';
+
+  const notification = document.createElement("div");
+  notification.id = "domain-locker-notification";
   notification.className = `notification ${type}`;
   notification.textContent = message;
-  
-  // Add notification styles
+
   const styles = `
     .notification {
       position: fixed;
@@ -62,89 +72,92 @@ function showNotification(message, type = 'success') {
       to { transform: translateX(0); opacity: 1; }
     }
   `;
-  
-  const styleSheet = document.createElement('style');
+
+  const styleSheet = document.createElement("style");
   styleSheet.textContent = styles;
   document.head.appendChild(styleSheet);
-  
+
   document.body.appendChild(notification);
-  
-  // Auto remove after 3 seconds
+
   setTimeout(() => {
-    notification.style.animation = 'slideOutRight 0.3s ease-in';
+    notification.style.animation = "slideOutRight 0.3s ease-in";
     setTimeout(() => notification.remove(), 300);
   }, 3000);
 }
 
-// Add slideOutRight animation
 const additionalStyles = `
   @keyframes slideOutRight {
     from { transform: translateX(0); opacity: 1; }
     to { transform: translateX(100%); opacity: 0; }
   }
 `;
-const additionalStyleSheet = document.createElement('style');
+const additionalStyleSheet = document.createElement("style");
 additionalStyleSheet.textContent = additionalStyles;
 document.head.appendChild(additionalStyleSheet);
 
 function setupTabs() {
-  const tabButtons = document.querySelectorAll('.tab-button');
-  
-  tabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      // Remove active class from all buttons and content
-      tabButtons.forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-      
-      // Add active class to clicked button and corresponding content
-      button.classList.add('active');
-      document.getElementById(`${button.dataset.tab}-tab`).classList.add('active');
+  const tabButtons = document.querySelectorAll(".tab-button");
+
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      tabButtons.forEach((btn) => btn.classList.remove("active"));
+      document
+        .querySelectorAll(".tab-content")
+        .forEach((content) => content.classList.remove("active"));
+
+      button.classList.add("active");
+      document
+        .getElementById(`${button.dataset.tab}-tab`)
+        .classList.add("active");
     });
   });
 }
 
 function togglePasswordVisibility() {
-  const passwordInput = document.getElementById('password-input');
-  const toggleBtn = document.getElementById('toggle-password-btn');
-  
-  if (passwordInput.type === 'password') {
-    passwordInput.type = 'text';
-    toggleBtn.textContent = '🙈';
+  const passwordInput = document.getElementById("password-input");
+  const toggleBtn = document.getElementById("toggle-password-btn");
+
+  if (passwordInput.type === "password") {
+    passwordInput.type = "text";
+    toggleBtn.textContent = "🙈";
   } else {
-    passwordInput.type = 'password';
-    toggleBtn.textContent = '👁';
+    passwordInput.type = "password";
+    toggleBtn.textContent = "👁";
   }
 }
 
 function isValidDomain(domain) {
-  // More flexible domain validation
-  const pattern = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+  const pattern =
+    /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
   return pattern.test(domain);
 }
 
 function togglePasswordVisibilityForDomain(domain, button) {
-  const row = button.closest('tr');
-  const passwordDisplay = row.querySelector('.password-display-cell');
-  
-  if (passwordDisplay.textContent === '••••••••') {
-    chrome.storage.local.get(['lockedDomains'], (result) => {
+  const row = button.closest("tr");
+  const passwordDisplay = row.querySelector(".password-display-cell");
+
+  if (passwordDisplay.textContent === "••••••••") {
+    chrome.storage.local.get(["lockedDomains"], (result) => {
       const lockedDomains = result.lockedDomains || {};
       passwordDisplay.textContent = lockedDomains[domain].password;
-      button.textContent = 'Hide';
+      button.textContent = "Hide";
     });
   } else {
-    passwordDisplay.textContent = '••••••••';
-    button.textContent = 'Show';
+    passwordDisplay.textContent = "••••••••";
+    button.textContent = "Show";
   }
 }
 
 function editDomain(domain) {
-  chrome.storage.local.get(['lockedDomains'], (result) => {
+  chrome.storage.local.get(["lockedDomains"], (result) => {
     const lockedDomains = result.lockedDomains || {};
     const domainData = lockedDomains[domain];
-    
-    const newPassword = prompt(`Enter new password for ${domain}:`, domainData.password);
-    
+
+    const newPassword = prompt(
+      `Enter new password for ${domain}:`,
+      domainData.password
+    );
+
     if (newPassword !== null) {
       lockedDomains[domain].password = newPassword;
       chrome.storage.local.set({ lockedDomains }, loadDomains);
@@ -154,7 +167,7 @@ function editDomain(domain) {
 
 function deleteDomain(domain) {
   if (confirm(`Are you sure you want to remove protection for ${domain}?`)) {
-    chrome.storage.local.get(['lockedDomains'], (result) => {
+    chrome.storage.local.get(["lockedDomains"], (result) => {
       const lockedDomains = result.lockedDomains || {};
       delete lockedDomains[domain];
       chrome.storage.local.set({ lockedDomains }, loadDomains);
@@ -163,17 +176,21 @@ function deleteDomain(domain) {
 }
 
 function filterDomains() {
-  const searchTerm = document.getElementById('search-domains').value.toLowerCase();
-  const domainRows = document.querySelectorAll('#domains-list tr');
-  
-  domainRows.forEach(row => {
-    if (row.classList.contains('no-domains')) return;
-    
-    const domainName = row.querySelector('.domain-name-cell').textContent.toLowerCase();
+  const searchTerm = document
+    .getElementById("search-domains")
+    .value.toLowerCase();
+  const domainRows = document.querySelectorAll("#domains-list tr");
+
+  domainRows.forEach((row) => {
+    if (row.classList.contains("no-domains")) return;
+
+    const domainName = row
+      .querySelector(".domain-name-cell")
+      .textContent.toLowerCase();
     if (domainName.includes(searchTerm)) {
-      row.style.display = '';
+      row.style.display = "";
     } else {
-      row.style.display = 'none';
+      row.style.display = "none";
     }
   });
 }
@@ -184,40 +201,61 @@ function loadSecurityQuestions() {
     "What's your favorite funny movie?",
     "What would be your superhero name?",
     "What's the most embarrassing thing that happened to you in school?",
-    "If you were a vegetable, what would you be and why?"
+    "If you were a vegetable, what would you be and why?",
   ];
-  
-  chrome.storage.local.get(['securityQuestions'], (result) => {
-    const securityQuestions = result.securityQuestions || defaultQuestions;
-    const questionsList = document.getElementById('security-questions-list');
-    
-    questionsList.innerHTML = '';
-    
+
+  chrome.storage.local.get(["securityQuestions", "lockedDomains"], (result) => {
+    let securityQuestions = result.securityQuestions || defaultQuestions;
+    const lockedDomains = result.lockedDomains || {};
+    const questionsList = document.getElementById("security-questions-list");
+
+    if (!result.securityQuestions) {
+      chrome.storage.local.set(
+        { securityQuestions: defaultQuestions },
+        () => {}
+      );
+    }
+
+    questionsList.innerHTML = "";
+
     securityQuestions.forEach((question, index) => {
-      const questionEl = document.createElement('div');
-      questionEl.className = 'security-question-item';
+      const questionEl = document.createElement("div");
+      questionEl.className = "security-question-item";
       questionEl.innerHTML = `
         <label>${question}</label>
         <input type="text" class="security-answer-input" data-index="${index}" placeholder="Your answer">
       `;
       questionsList.appendChild(questionEl);
     });
-    
-    // Load existing answers if any
+
     loadExistingAnswers();
+
+    // Object.keys(lockedDomains).forEach((domain) => {
+    //   if (lockedDomains[domain].securityAnswers) {
+
+    //   }
+    // });
   });
 }
 
 function loadExistingAnswers() {
-  chrome.storage.local.get(['lockedDomains'], (result) => {
+  chrome.storage.local.get(["lockedDomains"], (result) => {
     const lockedDomains = result.lockedDomains || {};
-    
-    // For simplicity, we'll use the first domain's answers
-    const firstDomain = Object.keys(lockedDomains)[0];
-    
-    if (firstDomain && lockedDomains[firstDomain].securityAnswers) {
-      lockedDomains[firstDomain].securityAnswers.forEach((answer, index) => {
-        const input = document.querySelector(`.security-answer-input[data-index="${index}"]`);
+
+    if (Object.keys(lockedDomains).length === 0) return;
+
+    const domainWithAnswers = Object.keys(lockedDomains).find(
+      (domain) =>
+        lockedDomains[domain].securityAnswers &&
+        lockedDomains[domain].securityAnswers.length > 0
+    );
+
+    if (domainWithAnswers) {
+      const answers = lockedDomains[domainWithAnswers].securityAnswers;
+      answers.forEach((answer, index) => {
+        const input = document.querySelector(
+          `.security-answer-input[data-index="${index}"]`
+        );
         if (input && answer) {
           input.value = answer;
         }
@@ -227,162 +265,218 @@ function loadExistingAnswers() {
 }
 
 function saveSecurityAnswers() {
-  const answerInputs = document.querySelectorAll('.security-answer-input');
-  const answers = Array.from(answerInputs).map(input => input.value.trim());
-  
-  // Count how many answers are provided
-  const providedAnswers = answers.filter(answer => answer !== '');
-  
+  const answerInputs = document.querySelectorAll(".security-answer-input");
+  const answers = Array.from(answerInputs).map((input) => ({
+    index: parseInt(input.dataset.index),
+    answer: input.value.trim(),
+  }));
+
+  const providedAnswers = answers.filter((item) => item.answer !== "");
+
   if (providedAnswers.length === 0) {
-    showNotification('Please provide answers to at least one security question');
+    showNotification(
+      "Please provide answers to at least one security question",
+      "error"
+    );
     return;
   }
-  
-  chrome.storage.local.get(['lockedDomains'], (result) => {
+
+  chrome.storage.local.get(["lockedDomains", "securityQuestions"], (result) => {
     const lockedDomains = result.lockedDomains || {};
-    
-    // Save answers for each domain individually
-    Object.keys(lockedDomains).forEach(domain => {
+    let securityQuestions = result.securityQuestions || [
+      "What was the name of your first pet?",
+      "What's your favorite funny movie?",
+      "What would be your superhero name?",
+      "What's the most embarrassing thing that happened to you in school?",
+      "If you were a vegetable, what would you be and why?",
+    ];
+
+    if (Object.keys(lockedDomains).length === 0) {
+      showNotification(
+        "No domains protected yet. Please add a domain first.",
+        "error"
+      );
+      return;
+    }
+
+    Object.keys(lockedDomains).forEach((domain) => {
       if (!lockedDomains[domain].securityAnswers) {
-        lockedDomains[domain].securityAnswers = [];
+        lockedDomains[domain].securityAnswers = new Array(
+          securityQuestions.length
+        ).fill("");
       }
-      // Update answers for this domain
-      answers.forEach((answer, index) => {
-        lockedDomains[domain].securityAnswers[index] = answer;
+
+      providedAnswers.forEach((item) => {
+        lockedDomains[domain].securityAnswers[item.index] = item.answer;
       });
     });
-    
-    chrome.storage.local.set({ lockedDomains }, () => {
-      showNotification('Security answers saved successfully for all domains!');
-    });
+
+    chrome.storage.local.set(
+      {
+        lockedDomains: lockedDomains,
+        securityQuestions: securityQuestions,
+      },
+      () => {
+        if (chrome.runtime.lastError) {
+          showNotification(
+            "Error saving security answers: " +
+              chrome.runtime.lastError.message,
+            "error"
+          );
+          return;
+        }
+        showNotification(
+          "Security answers saved successfully for all domains!"
+        );
+
+        // chrome.storage.local.get(
+        //   ["lockedDomains", "securityQuestions"],
+        //   (result) => {
+
+        //   }
+        // );
+      }
+    );
   });
 }
 
 function loadSettings() {
-  chrome.storage.local.get(['settings'], (result) => {
+  chrome.storage.local.get(["settings"], (result) => {
     const settings = result.settings || {
       reaskOnNavigation: false,
       autoLockAfterTime: false,
-      autoLockMinutes: 30
+      autoLockMinutes: 30,
     };
-    
-    document.getElementById('reask-on-navigation').checked = settings.reaskOnNavigation;
-    document.getElementById('auto-lock-after-time').checked = settings.autoLockAfterTime;
-    document.getElementById('auto-lock-minutes').value = settings.autoLockMinutes || 30;
-    
-    // Show/hide auto-lock settings
-    const autoLockSettings = document.getElementById('auto-lock-settings');
-    autoLockSettings.style.display = settings.autoLockAfterTime ? 'block' : 'none';
-    
-    // Add event listener for auto-lock checkbox
-    document.getElementById('auto-lock-after-time').addEventListener('change', function() {
-      autoLockSettings.style.display = this.checked ? 'block' : 'none';
-    });
+
+    document.getElementById("reask-on-navigation").checked =
+      settings.reaskOnNavigation;
+    document.getElementById("auto-lock-after-time").checked =
+      settings.autoLockAfterTime;
+    document.getElementById("auto-lock-minutes").value =
+      settings.autoLockMinutes || 30;
+
+    const autoLockSettings = document.getElementById("auto-lock-settings");
+    autoLockSettings.style.display = settings.autoLockAfterTime
+      ? "block"
+      : "none";
+
+    document
+      .getElementById("auto-lock-after-time")
+      .addEventListener("change", function () {
+        autoLockSettings.style.display = this.checked ? "block" : "none";
+      });
   });
 }
 
 function saveSettings() {
   const settings = {
-    reaskOnNavigation: document.getElementById('reask-on-navigation').checked,
-    autoLockAfterTime: document.getElementById('auto-lock-after-time').checked,
-    autoLockMinutes: parseInt(document.getElementById('auto-lock-minutes').value) || 30
+    reaskOnNavigation: document.getElementById("reask-on-navigation").checked,
+    autoLockAfterTime: document.getElementById("auto-lock-after-time").checked,
+    autoLockMinutes:
+      parseInt(document.getElementById("auto-lock-minutes").value) || 30,
   };
-  
+
   chrome.storage.local.set({ settings }, () => {
-    showNotification('Settings saved successfully!');
+    showNotification("Settings saved successfully!");
   });
 }
 
 function setupPasswordStrengthMeter() {
-  const passwordInput = document.getElementById('password-input');
-  const strengthBar = document.createElement('div');
-  strengthBar.className = 'password-strength';
-  strengthBar.innerHTML = '<div class="strength-bar"></div><div class="strength-text"></div>';
-  
+  const passwordInput = document.getElementById("password-input");
+  const strengthBar = document.createElement("div");
+  strengthBar.className = "password-strength";
+  strengthBar.innerHTML =
+    '<div class="strength-bar"></div><div class="strength-text"></div>';
+
   passwordInput.parentNode.insertBefore(strengthBar, passwordInput.nextSibling);
-  
-  passwordInput.addEventListener('input', function() {
+
+  passwordInput.addEventListener("input", function () {
     updatePasswordStrength(this.value, strengthBar);
   });
 }
 
 function updatePasswordStrength(password, strengthBar) {
-  const bar = strengthBar.querySelector('.strength-bar');
-  const text = strengthBar.querySelector('.strength-text');
-  
+  const bar = strengthBar.querySelector(".strength-bar");
+  const text = strengthBar.querySelector(".strength-text");
+
   let strength = 0;
-  let feedback = '';
-  
+  let feedback = "";
+
   if (password.length > 0) {
     if (password.length < 6) {
       strength = 25;
-      feedback = 'Weak';
-      bar.className = 'strength-bar strength-weak';
+      feedback = "Weak";
+      bar.className = "strength-bar strength-weak";
     } else if (password.length < 9) {
       strength = 50;
-      feedback = 'Fair';
-      bar.className = 'strength-bar strength-fair';
+      feedback = "Fair";
+      bar.className = "strength-bar strength-fair";
     } else if (password.length < 12) {
       strength = 75;
-      feedback = 'Good';
-      bar.className = 'strength-bar strength-good';
+      feedback = "Good";
+      bar.className = "strength-bar strength-good";
     } else {
       strength = 100;
-      feedback = 'Strong';
-      bar.className = 'strength-bar strength-strong';
+      feedback = "Strong";
+      bar.className = "strength-bar strength-strong";
     }
   } else {
-    bar.className = 'strength-bar';
-    feedback = '';
+    bar.className = "strength-bar";
+    feedback = "";
   }
-  
+
   text.textContent = feedback;
 }
 
 function addDomain() {
-  const domainInput = document.getElementById('domain-input');
-  const passwordInput = document.getElementById('password-input');
-  
+  const domainInput = document.getElementById("domain-input");
+  const passwordInput = document.getElementById("password-input");
+
   const domain = domainInput.value.trim();
   const password = passwordInput.value;
-  
+
   if (!domain) {
-    showNotification('Please enter a domain', 'info');
+    showNotification("Please enter a domain", "info");
     return;
   }
-  
+
   if (!password) {
-    showNotification('Please enter a password');
+    showNotification("Please enter a password");
     return;
   }
-  
-  // Normalize domain - remove www. if present
-  const normalizedDomain = domain.replace(/^www\./, '');
-  
-  chrome.storage.local.get(['lockedDomains'], (result) => {
+
+  const normalizedDomain = domain.replace(/^www\./, "");
+
+  chrome.storage.local.get(["lockedDomains"], (result) => {
     const lockedDomains = result.lockedDomains || {};
-    
-    // Check if domain already exists
-    const existingDomain = Object.keys(lockedDomains).find(d => 
-      d === normalizedDomain || d === 'www.' + normalizedDomain || 
-      normalizedDomain === 'www.' + d
+
+    const existingDomain = Object.keys(lockedDomains).find(
+      (d) =>
+        d === normalizedDomain ||
+        d === "www." + normalizedDomain ||
+        normalizedDomain === "www." + d
     );
-    
+
     if (existingDomain) {
-      if (!confirm(`Domain "${existingDomain}" is already protected. Do you want to update the password?`)) {
+      if (
+        !confirm(
+          `Domain "${existingDomain}" is already protected. Do you want to update the password?`
+        )
+      ) {
         return;
       }
     }
-    
-    // Add or update domain
+
     lockedDomains[normalizedDomain] = {
       password: password,
-      securityAnswers: lockedDomains[normalizedDomain] ? lockedDomains[normalizedDomain].securityAnswers : []
+      securityAnswers: lockedDomains[normalizedDomain]
+        ? lockedDomains[normalizedDomain].securityAnswers
+        : [],
     };
-    
+
     chrome.storage.local.set({ lockedDomains }, () => {
-      domainInput.value = '';
-      passwordInput.value = '';
+      domainInput.value = "";
+      passwordInput.value = "";
       loadDomains();
       showNotification(`Domain "${normalizedDomain}" has been protected!`);
     });
@@ -390,20 +484,21 @@ function addDomain() {
 }
 
 function loadDomains() {
-  chrome.storage.local.get(['lockedDomains'], (result) => {
+  chrome.storage.local.get(["lockedDomains"], (result) => {
     const lockedDomains = result.lockedDomains || {};
-    const domainsList = document.getElementById('domains-list');
-    
+    const domainsList = document.getElementById("domains-list");
+
     if (Object.keys(lockedDomains).length === 0) {
-      domainsList.innerHTML = '<tr><td colspan="3" class="no-domains">No domains protected yet.</td></tr>';
+      domainsList.innerHTML =
+        '<tr><td colspan="3" class="no-domains">No domains protected yet.</td></tr>';
       return;
     }
-    
-    domainsList.innerHTML = '';
-    
-    Object.keys(lockedDomains).forEach(domain => {
+
+    domainsList.innerHTML = "";
+
+    Object.keys(lockedDomains).forEach((domain) => {
       const domainData = lockedDomains[domain];
-      const domainEl = document.createElement('tr');
+      const domainEl = document.createElement("tr");
       domainEl.innerHTML = `
         <td class="domain-name-cell">${domain}</td>
         <td class="password-display-cell">••••••••</td>
@@ -420,45 +515,38 @@ function loadDomains() {
       `;
       domainsList.appendChild(domainEl);
     });
-    
-    // Add event listeners for domain actions
-    document.querySelectorAll('.btn-show-password').forEach(btn => {
-      btn.addEventListener('click', function() {
+
+    document.querySelectorAll(".btn-show-password").forEach((btn) => {
+      btn.addEventListener("click", function () {
         togglePasswordVisibilityForDomain(this.dataset.domain, this);
       });
     });
-    
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', function() {
+
+    document.querySelectorAll(".btn-edit").forEach((btn) => {
+      btn.addEventListener("click", function () {
         editDomain(this.dataset.domain);
       });
     });
-    
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', function() {
+
+    document.querySelectorAll(".btn-delete").forEach((btn) => {
+      btn.addEventListener("click", function () {
         deleteDomain(this.dataset.domain);
       });
     });
 
-    // Add event listeners for open domain buttons
-    document.querySelectorAll('.btn-open-domain').forEach(btn => {
-      btn.addEventListener('click', function() {
+    document.querySelectorAll(".btn-open-domain").forEach((btn) => {
+      btn.addEventListener("click", function () {
         openDomain(this.dataset.domain);
       });
     });
   });
 }
 
-// Add this new function to handle opening domains
 function openDomain(domain) {
-  // Add https:// protocol if not present
   let url = domain;
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    url = 'https://' + url;
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = "https://" + url;
   }
-  
-  // Open in new tab
-  chrome.tabs.create({ url: url }, (tab) => {
-    console.log(`Opened domain: ${url}`);
-  });
+
+  chrome.tabs.create({ url: url }, (tab) => {});
 }
