@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Domain Password Locker",
+  "version": "1.0",
+  "description": "Secure domain-based password protection for your browser tabs",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "webNavigation",
+    "scripting",
+    "contextMenus",
+    "notifications"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "action": {
+    "default_title": "Domain Password Locker",
+    "default_icon": {
+      "48": "icons/icon48.png"
+    }
+  },
+  "options_page": "options.html"
+}
